@@ -1,5 +1,21 @@
 # FixChennai - Local Repair & Maintenance Platform
 
+**FixChennai** is a civic-focused project aimed at making Chennai a better, cleaner, and more livable city. It is designed around the idea of helping people identify local problems, bring them to attention, and encourage community participation in improving urban spaces.
+
+The project envisions a platform where technology and citizen involvement can work together to address everyday civic challenges and contribute to a better Chennai.
+
+## Objectives
+
+- Encourage citizens to take an active role in improving their surroundings.
+- Promote awareness of local civic issues.
+- Support community participation in identifying problems and finding solutions.
+- Contribute towards building a cleaner, safer, and more sustainable city.
+
+## Vision
+
+To create a more connected and responsible community where citizens can contribute to positive change and help make Chennai a better place to live.
+
+## TechStack
 Spring Boot 3 / Java 17 / Spring Cloud microservices.
 
 | Service | Port | Responsibility |
@@ -57,3 +73,5 @@ curl localhost:8080/api/technicians/1
 - Swap H2 for PostgreSQL per service; add Dockerfiles / docker-compose.
 - Price-guide ranges are placeholders; replace with real Chennai data.
 - Add a frontend (React) that calls the gateway.
+
+*FixChennai — Small actions, meaningful change, a better Chennai.*
