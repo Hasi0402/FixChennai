@@ -1,7 +1,7 @@
 package com.fixchennai.technician;
 
-import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
+import org.springframework.boot.CommandLineRunner;
 
 /** Seeds a few sample technicians so discovery works out of the box. */
 @Component
