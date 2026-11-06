@@ -19,5 +19,7 @@ public class RepairRequest {
     @Enumerated(EnumType.STRING) private Status status = Status.REQUESTED;
     private Integer quotedAmount;
     private Integer finalAmount;
+    @Column(length = 1000) private String completionNotes;
+    @Column(length = 500) private String cancellationReason;
     private Instant createdAt = Instant.now();
 }

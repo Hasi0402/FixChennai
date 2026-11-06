@@ -15,8 +15,10 @@ public class RepairController {
     public record CreateRequest(@NotBlank String customerName, @NotBlank String customerPhone,
                                 @NotBlank String category, @NotBlank String issue, @NotBlank String area) {}
     public record QuoteRequest(@NotNull Long technicianId, @Min(1) int amount, String note) {}
-    public record CompleteRequest(@Min(1) int finalAmount) {}
+    public record CompleteRequest(@Min(1) int finalAmount, String completionNotes) {}
     public record CancelRequest(String reason) {}
+    public record AssignRequest(@NotNull Long technicianId, String note) {}
+    public record RejectRequest(@NotNull Long technicianId, String reason) {}
 
     private final RepairService service;
 
@@ -41,6 +43,16 @@ public class RepairController {
     @GetMapping
     public List<RepairRequest> history(@RequestParam String phone) { return service.historyFor(phone); }
 
+    /** All repairs across the system for Admin dashboard. */
+    @GetMapping("/all")
+    public List<RepairRequest> all() { return service.all(); }
+
+    /** Repairs assigned to technician or available for technician to quote. */
+    @GetMapping("/technician/{techId}")
+    public List<RepairRequest> forTechnician(@PathVariable Long techId) {
+        return service.historyForTechnician(techId);
+    }
+
     @GetMapping("/{id}")
     public RepairRequest get(@PathVariable Long id) { return service.get(id); }
 
@@ -60,11 +72,21 @@ public class RepairController {
 
     @PostMapping("/{id}/complete")
     public RepairRequest complete(@PathVariable Long id, @Valid @RequestBody CompleteRequest c) {
-        return service.complete(id, c.finalAmount());
+        return service.complete(id, c.finalAmount(), c.completionNotes());
     }
 
     @PostMapping("/{id}/cancel")
     public RepairRequest cancel(@PathVariable Long id, @RequestBody(required = false) CancelRequest c) {
         return service.cancel(id, c == null ? null : c.reason());
+    }
+
+    @PostMapping("/{id}/assign")
+    public RepairRequest assign(@PathVariable Long id, @Valid @RequestBody AssignRequest a) {
+        return service.assignTechnician(id, a.technicianId(), a.note());
+    }
+
+    @PostMapping("/{id}/reject")
+    public RepairRequest reject(@PathVariable Long id, @Valid @RequestBody RejectRequest r) {
+        return service.reject(id, r.technicianId(), r.reason());
     }
 }

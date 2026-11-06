@@ -32,7 +32,18 @@ public class RepairService {
         return repairs.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Repair not found"));
     }
 
+    public List<RepairRequest> all() {
+        return repairs.findAllByOrderByCreatedAtDesc();
+    }
+
     public List<RepairRequest> historyFor(String phone) { return repairs.findByCustomerPhoneOrderByCreatedAtDesc(phone); }
+
+    public List<RepairRequest> historyForTechnician(Long technicianId) {
+        return repairs.findAllByOrderByCreatedAtDesc().stream()
+                .filter(r -> (r.getTechnicianId() != null && r.getTechnicianId().equals(technicianId))
+                        || (r.getStatus() == Status.REQUESTED && r.getTechnicianId() == null))
+                .toList();
+    }
 
     public List<StatusEvent> timeline(Long id) { get(id); return events.findByRepairIdOrderByAtAsc(id); }
 
@@ -60,6 +71,10 @@ public class RepairService {
     }
 
     public RepairRequest complete(Long id, int finalAmount) {
+        return complete(id, finalAmount, null);
+    }
+
+    public RepairRequest complete(Long id, int finalAmount, String notes) {
         RepairRequest r = get(id);
         require(r, Status.IN_PROGRESS);
         int cap = (int) Math.floor(r.getQuotedAmount() * (1 + MAX_OVERRUN));
@@ -68,15 +83,35 @@ public class RepairService {
                 "Final amount exceeds the accepted quote by more than 10% (max Rs." + cap + "). Send a revised quote first.");
         }
         r.setFinalAmount(finalAmount);
+        if (notes != null && !notes.isBlank()) {
+            r.setCompletionNotes(notes);
+        }
         r.setStatus(Status.COMPLETED);
-        return log(repairs.save(r), "Completed. Final bill Rs." + finalAmount);
+        return log(repairs.save(r), "Completed. Final bill Rs." + finalAmount + (notes != null && !notes.isBlank() ? " Notes: " + notes : ""));
     }
 
     public RepairRequest cancel(Long id, String reason) {
         RepairRequest r = get(id);
         require(r, Status.REQUESTED, Status.QUOTED, Status.ACCEPTED, Status.IN_PROGRESS);
         r.setStatus(Status.CANCELLED);
+        if (reason != null && !reason.isBlank()) {
+            r.setCancellationReason(reason);
+        }
         return log(repairs.save(r), "Cancelled" + (reason == null ? "" : ": " + reason));
+    }
+
+    public RepairRequest assignTechnician(Long id, Long technicianId, String note) {
+        RepairRequest r = get(id);
+        r.setTechnicianId(technicianId);
+        return log(repairs.save(r), "Admin assigned technician #" + technicianId + (note == null ? "" : " - " + note));
+    }
+
+    public RepairRequest reject(Long id, Long technicianId, String reason) {
+        RepairRequest r = get(id);
+        if (r.getTechnicianId() != null && r.getTechnicianId().equals(technicianId)) {
+            r.setTechnicianId(null);
+        }
+        return log(repairs.save(r), "Technician #" + technicianId + " declined request" + (reason == null ? "" : ": " + reason));
     }
 
     private void require(RepairRequest r, Status... allowed) {
